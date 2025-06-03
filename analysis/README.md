@@ -1,13 +1,1 @@
-The `analysis` subdirectory contains notebooks and scripts for analyzing data. 
-
-For new projects, plain-text [quarto](https://quarto.org/) notebooks are recommended.
-
-Every figure and statistic in the published paper should be reproducible from these notebooks. 
-
-e.g. 
-
-``` 
-experiment1.qmd
-experiment2.qmd
-experiment3.qmd
-```
+The figures folder contains  scripts used to generate Figures 2, 3, and 4 in the paper. The statistics folder contains scripts used to generate the significance statistics cited in Sections 6 and 6.1 of the paper. 

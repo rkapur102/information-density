@@ -1,7 +1,3 @@
-The `data` sub-directory contains the output of experiments and model simulations, which serve as input to analyses.
+Raw data can be accessed at: https://drive.google.com/file/d/1UatrmEvNB6Rd-GLgG3qeNoqtKsEj2Uh4/view?usp=sharing
 
-Every study will have some 'raw' data (i.e. in the format it was in when it was exported) as well as some processed or 'clean' data.
-
-For most behavioral studies (< 10MB), we can keep the raw data under version control. 
-
-For datasets too big for GitHub (e.g. corpus analysis, fMRI), we will keep the raw data in another repository (e.g. Dropbox, Google Drive, Amazon S3).  
+The generation_scripts folder contains files used to generate all synthetic descriptions with GPT-4o-mini as well as files used to generate CLIPscores (these were run on GPU).
