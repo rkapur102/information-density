@@ -38,8 +38,7 @@ with open(input_file, 'r') as f:
 
 updated_images = {}
 
-num = 1701
-for img_file_name, img_info in list(image_data.items())[1701:]:
+for img_file_name, img_info in list(image_data.items()):
     print(num)
     captions = img_info['captions']
 
