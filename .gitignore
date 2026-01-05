@@ -56,7 +56,6 @@ __pycache__/
 *.pdf
 
 .DS_Store
-*.csv
 *.json
 *.pdf
 *.png
