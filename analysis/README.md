@@ -1,1 +1,1 @@
-The figures folder contains  scripts used to generate Figures 2, 3, and 4 in the paper. The statistics folder contains scripts used to generate the significance statistics cited in Sections 6 and 6.1 of the paper. 
+The figures folder contains scripts used to generate Figures 2, 3, and 4 in the paper. The statistics folder contains scripts used to generate the significance statistics cited in Sections 6 and 6.1 of the paper. 

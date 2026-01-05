@@ -4,8 +4,8 @@ import time
 from openai import OpenAI
 import base64
 
-# removed api key 
-# os.environ['OPENAI_API_KEY'] = 
+# removed api key
+# os.environ['OPENAI_API_KEY'] =
 
 client = OpenAI()
 
@@ -48,8 +48,8 @@ def generate_caption_with_image(prompt, image_path, retries = 3, wait_time = 60)
                 return None
 
 # intermediary input/output files from the prompt generation process that we have not included, all data used for plotting and stats is in processed_data_cache.pkl, complete data including captions is in "out_final_4_k_limited_with_scores.json" and "OF4_gpt4o_updated.json"
-input_file = './updated_images_and_captions.json'
-output_file = './updated_images_and_captions_with_sole_image_input.json'
+input_file = './out_final_4.json'
+output_file = './out_final_4_k_limited.json'
 
 with open(input_file, 'r') as f:
     image_data = json.load(f)
@@ -60,10 +60,20 @@ num = 0
 for img_file_name, img_info in list(image_data.items())[0:]:
     print(num)
 
-    prompt_image_description = "Describe this image and don't introduce any emotional information. Just describe what's there."
+    captions = img_info['captions']
+    k = sum(map(len, captions)) / len(captions)
+    img_info['k'] = k
+
+    prompt_image_description = f"Describe this image and don't introduce any emotional information. Just describe what's there. The description should be {k} characters long"
     image_path = img_info['image_path']
 
-    img_info['generated_caption_4'] = generate_caption_with_image(prompt_image_description, image_path = image_path)
+    k_limited = generate_caption_with_image(prompt_image_description, image_path = image_path)
+
+    img_info['generated_caption_4_k_limited'] = k_limited
+    if k_limited is not None:
+        img_info['generated_caption_4_k_limited_length'] = len(k_limited)
+    else:
+        img_info['generated_caption_4_k_limited_length'] = None
 
     updated_images[img_file_name] = img_info
     num += 1

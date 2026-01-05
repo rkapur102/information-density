@@ -195,10 +195,10 @@ def get_refonlyclipscore(model, references, candidates, device):
 
 def main():
     # intermediary files from the prompt generation process that we have not included, all data used for plotting and stats is in processed_data_cache.pkl, complete data including captions is in "out_final_4_k_limited_with_scores.json" and "OF4_gpt4o_updated.json"
-    json_path = 'OF4_gpt4o.json'
+    json_path = 'out_final_4_k_limited.json'
     paths_file = './paths.txt' # image paths for the 5000 images sampled from COCO
-    output_file = './result_clipscores_ablations.txt'
-    captions_file = './captions_ablations.txt'
+    output_file = './k_limited_clipscores.txt'
+    captions_file = './captions_k_limited.txt'
     batch_size = 100
 
     with open(paths_file, 'r') as f:
@@ -227,35 +227,34 @@ def main():
             if image_path not in allowed_paths:
                 continue
 
-            for key in ['gpt4o_concise', 'gpt4o_200char']:
-                gen_caption = img_data.get(key, "")
-                if gen_caption is None:
-                    gen_caption = ""
+            gen_caption = img_data.get('generated_caption_4_k_limited', "")
+            if gen_caption is None:
+                gen_caption = ""
 
-                try:
-                    tokenized_text = clip.tokenize(gen_caption)
-                    token_count = tokenized_text.shape[1]
-                except Exception:
-                    token_count = 78
+            try:
+                tokenized_text = clip.tokenize(gen_caption)
+                token_count = tokenized_text.shape[1]
+            except Exception:
+                token_count = 78
 
-                if token_count <= 77:
-                    caption = gen_caption
-                else:
-                    caption = ""
+            if token_count <= 77:
+                caption = gen_caption
+            else:
+                caption = "" # remember to filter out clipscores and pairings from the blank caption
 
-                caption_batch.append(caption)
-                f_cap.write(f"{count+1}\n{caption}\n")
-                count += 1
+            caption_batch.append(caption)
+            f_cap.write(f"{count+1}\n{caption}\n")
+            count += 1
 
-                if len(caption_batch) == batch_size:
-                    current_captions = np.repeat(caption_batch, len(image_paths), axis = 0)
-                    current_image_feats = np.tile(image_feats, (batch_size, 1))
+            if len(caption_batch) == batch_size:
+                current_captions = np.repeat(caption_batch, len(image_paths), axis = 0)
+                current_image_feats = np.tile(image_feats, (batch_size, 1))
 
-                    batch_scores = get_clip_score(model, current_image_feats, current_captions, device)
-                    for score in batch_scores:
-                        f_out.write(f"{float(score):.6f}\n")
-                    caption_batch.clear()
-                    print(f"Processed {count} captions")
+                batch_scores = get_clip_score(model, current_image_feats, current_captions, device)
+                for score in batch_scores:
+                    f_out.write(f"{float(score):.6f}\n")
+                caption_batch.clear()
+                print(f"Processed {count} captions")
 
         if caption_batch:
             current_captions = np.repeat(caption_batch, len(image_paths), axis = 0)

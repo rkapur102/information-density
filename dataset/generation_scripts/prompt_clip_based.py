@@ -29,7 +29,7 @@ def generate_caption_gpt4o(prompt, retries = 3, wait_time = 60):
                 print("Max retries reached. Skipping this request.")
                 return None
 
-# intermediary input/output files from the prompt generation process that we have not included
+# intermediary input/output files from the prompt generation process that we have not included, all data used for plotting and stats is in processed_data_cache.pkl, complete data including captions is in "out_final_4_k_limited_with_scores.json" and "OF4_gpt4o_updated.json"
 input_file = './selected_images_and_captions_with_primary_and_all_categories.json'
 output_file = './updated_images_and_captions.json'
 

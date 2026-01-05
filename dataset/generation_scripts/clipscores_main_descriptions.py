@@ -220,7 +220,7 @@ def main():
     with open('clipscores.json', 'r') as f:
         data = json.load(f)
 
-    # intermediary files which we have not included
+    # intermediary files from the prompt generation process that we have not included, all data was combined into processed_data_cache.pkl
     output_file = './result_clipscores.txt'
     paths_file = './paths.txt' # image paths for the 5000 images sampled from COCO
     captions_file = './captions.txt'

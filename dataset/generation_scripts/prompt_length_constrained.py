@@ -5,8 +5,9 @@ from openai import OpenAI
 # removed api key 
 # os.environ['OPENAI_API_KEY'] = 
 
-INPUT_FILE = "OF4_gpt4o_prep.json" # we have not included this file but it contained the exact data as out_final_4.json but with fields related to the other synthetic caption types removed
-OUTPUT_FILE = "OF4_gpt4o.json" # OF4_gpt4o_updated.json contains clipscores
+# intermediary input/output files from the prompt generation process that we have not included, all data used for plotting and stats is in processed_data_cache.pkl, complete data including captions is in "out_final_4_k_limited_with_scores.json" and "OF4_gpt4o_updated.json"
+INPUT_FILE = "OF4_gpt4o_prep.json" 
+OUTPUT_FILE = "OF4_gpt4o.json" 
 SAVE_EVERY = 100
 OPENAI_MODEL = "gpt-4o-mini"
 
