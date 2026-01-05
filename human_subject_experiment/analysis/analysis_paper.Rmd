@@ -1,0 +1,348 @@
+---
+title: "Evaluation Analysis"
+# output: html_notebook
+output: rmarkdown::github_document
+---
+
+# Data Setup
+
+```{r load libraries, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+theme_set(theme_bw())
+```
+
+```{r load data, message=FALSE, warning=FALSE}
+
+df_import_pref = read_csv("../data/data_preference.csv") %>% 
+  mutate(task_cond = "preference")
+df_import_inf = read_csv("../data/data_informativity.csv") %>% 
+  mutate(task_cond = "informativity")
+
+df_import = df_import_pref %>% 
+  rbind(df_import_inf)
+
+glimpse(df_import)
+
+```
+
+```{r}
+df = df_import %>% 
+  select(selected_descr_condition, nonselected_descr_condition, task_cond, anon_id, selected_descr_position, descr_left_condition, descr_right, descr_left, descr_right_condition, descr_left_condition, picture, trial_number) %>% 
+  mutate(caption_pair = case_when(
+    str_detect(selected_descr_condition, "(coco|verbose)") & str_detect(nonselected_descr_condition, "(coco|verbose)") ~ "coco_verbose",
+    str_detect(selected_descr_condition, "(coco|composite)") & str_detect(nonselected_descr_condition, "(coco|composite)") ~ "coco_composite",
+    str_detect(selected_descr_condition, "(coco|gpt4o)") & str_detect(nonselected_descr_condition, "(coco|gpt4o)") ~ "coco_gpt4o",
+    str_detect(selected_descr_condition, "(verbose|gpt4o)") & str_detect(nonselected_descr_condition, "(verbose|gpt4o)") ~ "verbose_gpt4o",
+    str_detect(selected_descr_condition, "(verbose|composite)") & str_detect(nonselected_descr_condition, "(verbose|composite)") ~ "verbose_composite",
+    str_detect(selected_descr_condition, "(gpt4o|composite)") & str_detect(nonselected_descr_condition, "(gpt4o|composite)") ~ "gpt4o_composite",
+    TRUE ~ "FIRE"
+  )) %>% 
+  mutate(descr_right_length = str_length(descr_right),
+         descr_left_length = str_length(descr_left))
+```
+
+```{r}
+df %>% 
+  mutate(caption_gpt4o = as.integer(selected_descr_condition == "caption_gpt4o")) %>%
+  mutate(caption_verbose = as.integer(selected_descr_condition == "caption_verbose")) %>%
+  mutate(caption_coco = as.integer(selected_descr_condition == "caption_coco")) %>%
+  mutate(caption_composite = as.integer(selected_descr_condition == "caption_composite")) %>%
+  gather(caption_type, selected, caption_gpt4o,caption_verbose,caption_coco,caption_composite) %>% 
+  select(caption_type, selected, caption_pair, task_cond) %>% 
+  mutate(caption_type = str_replace_all(caption_type, "caption_", "")) %>% 
+  filter(str_detect(caption_pair, caption_type)) %>% 
+  mutate(caption_pair = factor(caption_pair, levels = c(
+    "verbose_composite",
+    "coco_verbose",
+    "coco_composite",
+    "coco_gpt4o",
+    "verbose_gpt4o",
+    "gpt4o_composite"
+  ))) %>% 
+  mutate(caption_type = factor(caption_type, levels = c(
+    "coco",
+    "verbose",
+    "composite",
+    "gpt4o"
+  ))) %>% 
+  ggplot(., aes(x=caption_type, y=selected, fill=task_cond)) +
+    facet_wrap(vars(caption_pair), scales = "free", nrow=1, labeller = labeller(caption_pair = c(
+    "coco_composite" = "Original:Composite",
+    "coco_gpt4o" = "Original:GPT-4o",
+    "coco_verbose" = "Original:Verbose",
+    "gpt4o_composite" = "Composite:GPT-4o",
+    "verbose_composite" = "Composite:Verbose",
+    "verbose_gpt4o" = "Verbose:GPT-4o"
+  ))) +
+    stat_summary(fun = "mean",
+                 position=position_dodge(.8),
+                 width = .8,
+                 color="black",
+                 geom = "bar") +
+    stat_summary(fun.data = "mean_cl_boot",
+                 position=position_dodge(.8),
+                 geom = "errorbar",
+                 size = .4,
+                 width = 0.1) +
+    # theme(axis.text.x = element_text(angle=45, hjust=1)) +
+    scale_x_discrete(labels = c("coco" = "Original", "composite" = "Composite", "verbose" = "Verbose", "gpt4o" = "GPT-4o")) +
+    scale_fill_manual(values=c("#009E73", "#E69F00"), labels=c("Informativity", "Preference"), name="Task Condition") +
+    # "Original", "Composite", "GPT-4o", "Verbose"
+    theme(legend.position = "top") +
+    theme(strip.background = element_rect(fill = "white", color = "black")) +
+    xlab("Description Type") +
+    ylab("Proportion of Selection") 
+
+ggsave("infpref_barchart.pdf", width = 11, height=4.2)
+
+df %>% 
+  filter(task_cond == "preference") %>%
+  mutate(caption_gpt4o = as.integer(selected_descr_condition == "caption_gpt4o")) %>%
+  mutate(caption_verbose = as.integer(selected_descr_condition == "caption_verbose")) %>%
+  mutate(caption_coco = as.integer(selected_descr_condition == "caption_coco")) %>%
+  mutate(caption_composite = as.integer(selected_descr_condition == "caption_composite")) %>%
+  gather(caption_type, selected, caption_gpt4o,caption_verbose,caption_coco,caption_composite) %>% 
+  select(caption_type, selected, caption_pair, task_cond) %>% 
+  mutate(caption_type = str_replace_all(caption_type, "caption_", "")) %>% 
+  filter(str_detect(caption_pair, caption_type)) %>% 
+  mutate(caption_pair = factor(caption_pair, levels = c(
+    "verbose_composite",
+    "coco_verbose",
+    "coco_composite",
+    "coco_gpt4o",
+    "verbose_gpt4o",
+    "gpt4o_composite"
+  ))) %>% 
+  filter(!str_detect(caption_pair, "gpt4o")) %>% 
+  mutate(caption_type = factor(caption_type, levels = c(
+    "coco",
+    "verbose",
+    "composite",
+    "gpt4o"
+  ))) %>% 
+  ggplot(., aes(x=caption_type, y=selected, fill=caption_type)) +
+    facet_wrap(vars(caption_pair), scales = "free", nrow=1, labeller = labeller(caption_pair = c(
+    "coco_composite" = "Original:Composite",
+    "coco_gpt4o" = "Original:VLM",
+    "coco_verbose" = "Original:Verbose",
+    "gpt4o_composite" = "Composite:VLM",
+    "verbose_composite" = "Verbose:Composite",
+    "verbose_gpt4o" = "Verbose:VLM"
+  ))) +
+    stat_summary(fun = "mean",
+                 position=position_dodge(.8),
+                 width = .4,
+                 color="black",
+                 geom = "bar") +
+    stat_summary(fun.data = "mean_cl_boot",
+                 position=position_dodge(.8),
+                 geom = "errorbar",
+                 size = .4,
+                 width = 0.1) +
+    theme(axis.text.x = element_text(angle=30, hjust=1, size=11)) +
+    theme(axis.title = element_text(size=12)) +
+    scale_x_discrete(labels = c("coco" = "Original", "composite" = "Composite", "verbose" = "Verbose", "gpt4o" = "VLM")) +
+    scale_fill_manual(values=c("#FE6100", "#FFB000", "#DC267F", "#785EF0")) +
+    theme(legend.position = "none") +
+    theme(strip.background = element_rect(fill = "white", color = "black")) +
+    xlab("Description Type") +
+    ylab("Proportion of Selection") 
+
+ggsave("infpref_barchart_prefonly_nogpt4o.pdf", width = 4.8, height=3)
+
+
+
+```
+
+
+```{r}
+study_type = "preference"
+study_type = "informativity"
+
+df_stats = df %>%  
+  gather(location, caption_cond, descr_left_condition, descr_right_condition) %>% 
+  mutate(chosen = selected_descr_condition == caption_cond) %>% 
+  mutate(length = ifelse(location == "descr_left_condition", descr_left_length, descr_right_length)) %>% 
+  select(task_cond, caption_pair, chosen, caption_cond, length, anon_id, picture)
+
+# PREFERENCE
+# Coefficients:
+#                                 Estimate Std. Error z value Pr(>|z|)    
+# (Intercept)                   -0.8942054  0.2631305  -3.398 0.000678 ***
+# caption_condcaption_composite  1.8524684  0.7290571   2.541 0.011056 *  
+# length                        -0.0002231  0.0035553  -0.063 0.949955
+
+# INFORMATIVITY
+# Coefficients:
+#                                Estimate Std. Error z value Pr(>|z|)  
+# (Intercept)                    0.047672   0.264425   0.180   0.8569  
+# caption_condcaption_composite  1.625809   0.673681   2.413   0.0158 *
+# length                        -0.006266   0.003362  -1.864   0.0623 .
+
+model_coco_composite = df_stats %>% 
+  filter(caption_pair == "coco_composite",
+         task_cond == study_type) %>% 
+  glm(chosen ~ caption_cond + length, .,family = binomial(link = "logit"))
+summary(model_coco_composite)
+
+
+
+
+
+# PREFERENCE
+# Coefficients:
+#                              Estimate Std. Error z value Pr(>|z|)  
+# (Intercept)                  0.428730   0.237029   1.809   0.0705 .
+# caption_condcaption_verbose -0.329637   0.662268  -0.498   0.6187  
+# length                      -0.001608   0.002615  -0.615   0.5386
+
+# INFORMATIVITY
+# Coefficients:
+#                              Estimate Std. Error z value Pr(>|z|)  
+# (Intercept)                  0.023748   0.244406   0.097   0.9226  
+# caption_condcaption_verbose -1.491069   0.745296  -2.001   0.0454 *
+# length                       0.004224   0.002774   1.522   0.1279
+
+model_coco_verbose = df_stats %>% 
+  filter(caption_pair == "coco_verbose",
+         task_cond == study_type) %>% 
+  glm(chosen ~ caption_cond + length, .,family = binomial(link = "logit"))
+summary(model_coco_verbose)
+
+
+
+
+# PREFERENCE
+# Coefficients:
+#                               Estimate Std. Error z value Pr(>|z|)    
+# (Intercept)                  0.7823679  0.4835105   1.618    0.106    
+# caption_condcaption_verbose -1.3952909  0.3019781  -4.621 3.83e-06 ***
+# length                      -0.0003396  0.0019684  -0.173    0.863 
+
+# INFORMATIVITY
+# Coefficients:
+#                              Estimate Std. Error z value Pr(>|z|)    
+# (Intercept)                  0.929993   0.564828   1.647   0.0997 .  
+# caption_condcaption_verbose -1.299064   0.316668  -4.102 4.09e-05 ***
+# length                      -0.001068   0.002227  -0.480   0.6316 
+
+model_verbose_composite = df_stats %>% 
+  filter(caption_pair == "verbose_composite",
+         task_cond == study_type) %>% 
+  glm(chosen ~ caption_cond + length, .,family = binomial(link = "logit"))
+summary(model_verbose_composite)
+
+
+###
+### Do specificity rating averages predict preferences? ###
+###
+
+df_spec_avg = df_stats %>% 
+  group_by(task_cond, caption_pair, caption_cond, picture) %>%
+  summarize(spec_rate = sum(chosen)/n()) %>%
+  ungroup() %>%
+  filter(task_cond == "informativity") %>% 
+  select(-task_cond)
+
+# Coefficients:
+#             Estimate Std. Error z value Pr(>|z|)  
+# (Intercept)  -0.5523     0.2703  -2.043   0.0410 *
+# spec_rate     1.1046     0.4714   2.343   0.0191 *
+model_coco_composite = df_stats %>% 
+  left_join(df_spec_avg) %>% 
+  filter(caption_pair == "coco_composite",
+         task_cond == "preference") %>% 
+  glm(chosen ~ spec_rate, .,family = binomial(link = "logit"))
+summary(model_coco_composite)
+
+# Coefficients:
+#             Estimate Std. Error z value Pr(>|z|)  
+# (Intercept)  -0.4323     0.2673  -1.617   0.1059  
+# spec_rate     0.8645     0.4547   1.901   0.0573 .
+model_coco_verbose = df_stats %>% 
+  left_join(df_spec_avg) %>%  
+  filter(caption_pair == "coco_verbose",
+         task_cond == "preference") %>% 
+  glm(chosen ~ spec_rate, .,family = binomial(link = "logit"))
+summary(model_coco_verbose)
+
+# Coefficients:
+#             Estimate Std. Error z value Pr(>|z|)    
+# (Intercept)  -0.8645     0.2609  -3.314 0.000921 ***
+# spec_rate     1.7290     0.4383   3.945 7.98e-05 ***
+model_verbose_composite = df_stats %>% 
+  left_join(df_spec_avg) %>% 
+  filter(caption_pair == "verbose_composite",
+         task_cond == "preference") %>% 
+  glm(chosen ~ spec_rate, .,family = binomial(link = "logit"))
+summary(model_verbose_composite)
+```
+
+
+
+```{r}
+library(ggpubr)
+
+# Corellation of item-pair-wise averaged specificity and preference scores
+# R=0.21, p=0.0056
+
+df %>% 
+  mutate(caption_gpt4o = as.integer(selected_descr_condition == "caption_gpt4o")) %>%
+  mutate(caption_verbose = as.integer(selected_descr_condition == "caption_verbose")) %>%
+  mutate(caption_coco = as.integer(selected_descr_condition == "caption_coco")) %>%
+  mutate(caption_composite = as.integer(selected_descr_condition == "caption_composite")) %>%
+  gather(caption_type, selected, caption_gpt4o,caption_verbose,caption_coco,caption_composite) %>%
+  mutate(item = picture) %>% 
+  select(caption_type, selected, caption_pair, task_cond, item) %>% 
+  mutate(caption_type = str_replace_all(caption_type, "caption_", "")) %>% 
+  filter(str_detect(caption_pair, caption_type)) %>% 
+  mutate(caption_pair = factor(caption_pair, levels = c(
+    "verbose_composite",
+    "coco_verbose",
+    "coco_composite",
+    "coco_gpt4o",
+    "verbose_gpt4o",
+    "gpt4o_composite"
+  ))) %>% 
+  mutate(caption_type = factor(caption_type, levels = c(
+    "coco",
+    "verbose",
+    "composite",
+    "gpt4o"
+  ))) %>% 
+  group_by(task_cond, item, caption_type, caption_pair) %>% 
+  summarize(avg_selection = mean(selected)) %>% 
+  ungroup %>% 
+  spread(task_cond, avg_selection) %>% 
+  mutate(keep = case_when(
+    caption_pair == "verbose_composite" & caption_type == "verbose" ~ TRUE,
+    caption_pair == "coco_verbose" & caption_type == "coco" ~ TRUE,
+    caption_pair == "coco_composite" & caption_type == "coco" ~ TRUE,
+    caption_pair == "coco_gpt4o" & caption_type == "coco" ~ TRUE,
+    caption_pair == "verbose_gpt4o" & caption_type == "verbose" ~ TRUE,
+    caption_pair == "gpt4o_composite" & caption_type == "gpt4o" ~ TRUE,
+    TRUE ~ FALSE
+  )) %>% 
+  filter(keep) %>%
+  ggplot(., aes(x=informativity, y=preference)) +
+    geom_point() +
+    geom_smooth(method = "lm", size=1.3) +
+    stat_cor(method = "pearson", 
+           label.x.npc = "left", 
+           label.y.npc = "top", 
+           aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~")), 
+           size = 4, 
+           color = "black") +
+    theme(legend.position = "top")
+```
+
+
+
+
+
+
+
+
+
