@@ -7,14 +7,14 @@ var config_deploy = {
     // "experimentID": "100",
     // // if you use the _babe server app, specify its URL here
     "experimentID": "informativity.json",
-    "serverAppURL": "https://description-choice-study-default-rtdb.firebaseio.com/",
+    // "serverAppURL": "https://anonymous.com/",
 
     // set deployment method; use one of:
     //'debug', 'localServer', 'MTurk', 
     // 'MTurkSandbox', 'Prolific', 'directLink'
-    // "deployMethod": "debug",
+    "deployMethod": "debug",
     // "deployMethod": "directLink",
-    "deployMethod": "Prolific",
+    // "deployMethod": "Prolific",
     // "deployMethod": "MTurk",
     // "deployMethod": "MTurkSandbox",
 
