@@ -4,7 +4,6 @@ dataset/dataset.zip
 ## ignoring by default
 .DS_Store
 .ipynb_checkpoints/
-*.csv
 *.json
 *.pdf
 *.png
