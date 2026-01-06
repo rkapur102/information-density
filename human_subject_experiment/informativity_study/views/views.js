@@ -16,7 +16,7 @@ var intro = {
 
         $("#main").html(
             Mustache.render(viewTemplate, {
-                picture: "stimuli/stanford-nlp-logo.jpg",
+                picture: "REDACTED",
                 title: this.title,
                 text: this.text,
                 legal_info: this.legal_info,
