@@ -19,7 +19,7 @@ var config_deploy = {
     // "deployMethod": "MTurkSandbox",
 
     // who to contact in case of trouble
-    "contact_email": "rheak@stanford.edu",
+    "contact_email": "REDACTED",
 
     // OPTIONAL FIELDS
 
