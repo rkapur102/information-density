@@ -59,7 +59,6 @@ __pycache__/
 *.pdf
 *.png
 *.jpeg
-*.jpg
 *.tiff
 *.svg
 *.eps
