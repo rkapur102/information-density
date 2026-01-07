@@ -8,7 +8,6 @@ dataset/complete_data_jsons.zip
 *.pdf
 *.png
 *.jpeg
-*.jpg
 *.tiff
 *.svg
 *.eps
